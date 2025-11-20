@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR코드 생성기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 3rem 1rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            letter-spacing: -0.025em;
+        }
+        
+        .subtitle {
+            font-size: 1.125rem;
+            color: #475569;
+            max-width: 42rem;
+            margin: 0 auto;
+        }
+        
+        .qr-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .qr-item {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+        
+        .qr-item:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+        
+        .qr-item-content {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .qr-item-input-wrapper {
+            flex: 1;
+        }
+        
+        .qr-item label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 0.5rem;
+        }
+        
+        .qr-item input {
+            width: 100%;
+            padding: 0.625rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            color: #0f172a;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .qr-item input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .qr-item input::placeholder {
+            color: #94a3b8;
+        }
+        
+        .btn-remove {
+            margin-top: 1.75rem;
+            padding: 0.5rem;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-remove:hover {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 1rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+        
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-dark {
+            background: #0f172a;
+            color: white;
+        }
+        
+        .btn-dark:hover {
+            background: #1e293b;
+        }
+        
+        .results {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 3rem;
+        }
+        
+        .results.hidden {
+            display: none;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .results-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .qr-result {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+        
+        .qr-result:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+        
+        .qr-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            margin-bottom: 0.75rem;
+        }
+        
+        .qr-image-wrapper {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+            border: 1px solid #f1f5f9;
+        }
+        
+        .qr-image-wrapper img {
+            width: 256px;
+            height: 256px;
+        }
+        
+        .qr-url {
+            font-size: 0.875rem;
+            color: #475569;
+            word-break: break-all;
+            font-family: monospace;
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #f1f5f9;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-download {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .qr-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn-dark {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+    <div class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                QR코드 생성기
+            </h1>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                링크를 입력하여 스캔 가능한 QR코드를 생성하세요
+            </p>
+        </div>
+
+        <div id="qrItemsContainer" class="space-y-4 mb-8"></div>
+
+        <div class="flex gap-3 justify-center mb-12">
+            <button onclick="addQRItem()" id="addBtn" class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                URL 추가
+            </button>
+
+            <button onclick="handleGenerate()" class="btn btn-primary">QR 생성</button>
+        </div>
+
+        <div id="results" class="results hidden">
+            <div class="results-header">
+                <h2 class="results-title">생성된 QR코드</h2>
+                <button onclick="downloadAll()" class="btn btn-dark">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    전체 다운로드
+                </button>
+            </div>
+            <div id="qrGrid" class="qr-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        let qrItems = [{ id: 1, url: '' }];
+        let generatedQRs = [];
+
+        function render() {
+            const container = document.getElementById('qrItemsContainer');
+            container.innerHTML = '';
+
+            qrItems.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'qr-item';
+                
+                const inputValue = (item.url || '').replace(/"/g, '&quot;');
+                const removeButton = qrItems.length > 1 ? 
+                    `<button onclick="removeQRItem(${item.id})" class="btn-remove" title="삭제">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>` : '';
+                
+                div.innerHTML = `
+                    <div class="qr-item-content">
+                        <div class="qr-item-input-wrapper">
+                            <label>링크 ${index + 1}</label>
+                            <input type="text" 
+                                   value="${inputValue}" 
+                                   oninput="updateURL(${item.id}, this.value)"
+                                   placeholder="https://example.com">
+                        </div>
+                        ${removeButton}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            document.getElementById('addBtn').disabled = qrItems.length >= 10;
+        }
+
+        function addQRItem() {
+            if (qrItems.length < 10) {
+                qrItems.push({ id: Date.now(), url: '' });
+                render();
+            }
+        }
+
+        function removeQRItem(id) {
+            qrItems = qrItems.filter(item => item.id !== id);
+            render();
+        }
+
+        function updateURL(id, value) {
+            const item = qrItems.find(i => i.id === id);
+            if (item) {
+                item.url = value;
+            }
+        }
+
+        async function generateQRCode(text) {
+            return new Promise((resolve) => {
+                const tempDiv = document.createElement('div');
+                tempDiv.style.display = 'none';
+                document.body.appendChild(tempDiv);
+
+                try {
+                    new QRCode(tempDiv, {
+                        text: text,
+                        width: 400,
+                        height: 400,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+
+                    setTimeout(() => {
+                        const canvas = tempDiv.querySelector('canvas');
+                        if (canvas) {
+                            const dataURL = canvas.toDataURL('image/png');
+                            document.body.removeChild(tempDiv);
+                            resolve(dataURL);
+                        } else {
+                            document.body.removeChild(tempDiv);
+                            resolve(null);
+                        }
+                    }, 200);
+                } catch (error) {
+                    document.body.removeChild(tempDiv);
+                    resolve(null);
+                }
+            });
+        }
+
+        async function handleGenerate() {
+            const validItems = qrItems.filter(item => item.url && item.url.trim() !== '');
+            
+            if (validItems.length === 0) {
+                alert('최소 1개의 링크를 입력해주세요.');
+                return;
+            }
+
+            generatedQRs = [];
+
+            for (const item of validItems) {
+                const qrDataURL = await generateQRCode(item.url);
+                if (qrDataURL) {
+                    generatedQRs.push({
+                        id: item.id,
+                        url: item.url,
+                        dataURL: qrDataURL
+                    });
+                }
+            }
+
+            displayResults();
+        }
+
+        function displayResults() {
+            const qrGrid = document.getElementById('qrGrid');
+            qrGrid.innerHTML = '';
+
+            generatedQRs.forEach((qr, index) => {
+                const originalIndex = qrItems.findIndex(item => item.id === qr.id);
+                
+                const div = document.createElement('div');
+                div.className = 'qr-result';
+                div.innerHTML = `
+                    <div class="qr-badge">링크 ${originalIndex + 1}</div>
+                    <div class="qr-image-wrapper">
+                        <img src="${qr.dataURL}" alt="QR Code ${index + 1}">
+                    </div>
+                    <p class="qr-url">${qr.url}</p>
+                    <button onclick="downloadQR(${index})" class="btn btn-primary btn-download">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        다운로드
+                    </button>
+                `;
+                qrGrid.appendChild(div);
+            });
+
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function downloadQR(index) {
+            try {
+                const qr = generatedQRs[index];
+                const link = document.createElement('a');
+                link.download = `qrcode_${index + 1}.png`;
+                link.href = qr.dataURL;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('다운로드 중 오류가 발생했습니다.');
+            }
+        }
+
+        async function downloadAll() {
+            if (generatedQRs.length === 0) {
+                alert('생성된 QR코드가 없습니다.');
+                return;
+            }
+            
+            const zip = new JSZip();
+            
+            generatedQRs.forEach((qr, index) => {
+                const originalIndex = qrItems.findIndex(item => item.id === qr.id);
+                const base64Data = qr.dataURL.split(',')[1];
+                zip.file(`링크${originalIndex + 1}_qrcode.png`, base64Data, { base64: true });
+            });
+            
+            const content = await zip.generateAsync({ type: 'blob' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = 'qrcodes.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        // 초기 렌더링
+        render();
+    </script>
+</body>
+</html>
