@@ -262,6 +262,68 @@
             justify-content: center;
         }
         
+        .output-type-selector {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .output-type-selector h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 1rem;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .radio-option {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+        
+        .radio-option label {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        
+        .radio-option input[type="radio"]:checked + label {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .radio-option label:hover {
+            border-color: #cbd5e1;
+        }
+        
+        .radio-label-title {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+        
+        .radio-label-desc {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
         @media (max-width: 768px) {
             .title {
                 font-size: 2rem;
@@ -281,6 +343,71 @@
                 justify-content: center;
             }
         }
+
+        /* 인쇄용 스타일 */
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .header, .qr-items, .buttons, .results-header {
+                display: none;
+            }
+            
+            .results {
+                border: none;
+                padding: 0;
+            }
+            
+            .qr-grid {
+                display: block;
+            }
+            
+            .qr-result {
+                page-break-after: always;
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                text-align: center;
+            }
+            
+            .qr-result:last-child {
+                page-break-after: auto;
+            }
+            
+            .qr-badge {
+                display: none;
+            }
+            
+            .qr-subject-name {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: #0f172a;
+                margin-bottom: 3rem;
+            }
+            
+            .qr-image-wrapper {
+                background: white;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .qr-image-wrapper img {
+                width: 400px;
+                height: 400px;
+            }
+            
+            .qr-url, .btn-download {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50">
@@ -294,12 +421,32 @@
             </p>
         </div>
 
+        <div class="output-type-selector">
+            <h3>산출물 유형 선택</h3>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" id="qr-only" name="output-type" value="qr-only" checked>
+                    <label for="qr-only">
+                        <span class="radio-label-title">QR코드만 생성</span>
+                        <span class="radio-label-desc">QR 이미지만 다운로드</span>
+                    </label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" id="with-title" name="output-type" value="with-title">
+                    <label for="with-title">
+                        <span class="radio-label-title">과목명 + QR코드</span>
+                        <span class="radio-label-desc">A4 인쇄용 (과목명 포함)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <div id="qrItemsContainer" class="space-y-4 mb-8"></div>
 
         <div class="flex gap-3 justify-center mb-12">
             <button onclick="addQRItem()" id="addBtn" class="btn btn-secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                URL 추가
+                과목 추가
             </button>
 
             <button onclick="handleGenerate()" class="btn btn-primary">QR 생성</button>
@@ -308,18 +455,39 @@
         <div id="results" class="results hidden">
             <div class="results-header">
                 <h2 class="results-title">생성된 QR코드</h2>
-                <button onclick="downloadAll()" class="btn btn-dark">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                    전체 다운로드
-                </button>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button onclick="window.print()" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                        인쇄하기
+                    </button>
+                    <button onclick="downloadAll()" class="btn btn-dark">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        전체 다운로드
+                    </button>
+                </div>
             </div>
             <div id="qrGrid" class="qr-grid"></div>
         </div>
     </div>
 
     <script>
-        let qrItems = [{ id: 1, url: '' }];
+        let qrItems = [{ id: 1, name: '', url: '' }];
         let generatedQRs = [];
+        let outputType = 'qr-only';
+
+        // 산출물 유형 변경 감지
+        document.addEventListener('DOMContentLoaded', function() {
+            const radioButtons = document.querySelectorAll('input[name="output-type"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    outputType = this.value;
+                    render();
+                    if (generatedQRs.length > 0) {
+                        displayResults();
+                    }
+                });
+            });
+        });
 
         function render() {
             const container = document.getElementById('qrItemsContainer');
@@ -329,24 +497,47 @@
                 const div = document.createElement('div');
                 div.className = 'qr-item';
                 
-                const inputValue = (item.url || '').replace(/"/g, '&quot;');
+                const nameValue = (item.name || '').replace(/"/g, '&quot;');
+                const urlValue = (item.url || '').replace(/"/g, '&quot;');
                 const removeButton = qrItems.length > 1 ? 
                     `<button onclick="removeQRItem(${item.id})" class="btn-remove" title="삭제">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>` : '';
                 
-                div.innerHTML = `
+                // 과목명 입력란은 'with-title' 모드일 때만 표시
+                const nameField = outputType === 'with-title' ? `
+                    <div class="qr-item-content">
+                        <div class="qr-item-input-wrapper">
+                            <label>과목명 ${index + 1}</label>
+                            <input type="text" 
+                                   value="${nameValue}" 
+                                   oninput="updateName(${item.id}, this.value)"
+                                   placeholder="과목명을 입력하세요">
+                        </div>
+                        ${removeButton}
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem;">링크 URL</label>
+                        <input type="text" 
+                               value="${urlValue}" 
+                               oninput="updateURL(${item.id}, this.value)"
+                               placeholder="https://example.com"
+                               style="width: 100%; padding: 0.625rem 1rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 1rem; color: #0f172a;">
+                    </div>
+                ` : `
                     <div class="qr-item-content">
                         <div class="qr-item-input-wrapper">
                             <label>링크 ${index + 1}</label>
                             <input type="text" 
-                                   value="${inputValue}" 
+                                   value="${urlValue}" 
                                    oninput="updateURL(${item.id}, this.value)"
                                    placeholder="https://example.com">
                         </div>
                         ${removeButton}
                     </div>
                 `;
+                
+                div.innerHTML = nameField;
                 container.appendChild(div);
             });
 
@@ -355,7 +546,7 @@
 
         function addQRItem() {
             if (qrItems.length < 10) {
-                qrItems.push({ id: Date.now(), url: '' });
+                qrItems.push({ id: Date.now(), name: '', url: '' });
                 render();
             }
         }
@@ -363,6 +554,13 @@
         function removeQRItem(id) {
             qrItems = qrItems.filter(item => item.id !== id);
             render();
+        }
+
+        function updateName(id, value) {
+            const item = qrItems.find(i => i.id === id);
+            if (item) {
+                item.name = value;
+            }
         }
 
         function updateURL(id, value) {
@@ -407,11 +605,25 @@
         }
 
         async function handleGenerate() {
-            const validItems = qrItems.filter(item => item.url && item.url.trim() !== '');
+            let validItems;
             
-            if (validItems.length === 0) {
-                alert('최소 1개의 링크를 입력해주세요.');
-                return;
+            if (outputType === 'with-title') {
+                validItems = qrItems.filter(item => 
+                    item.name && item.name.trim() !== '' && 
+                    item.url && item.url.trim() !== ''
+                );
+                
+                if (validItems.length === 0) {
+                    alert('과목명과 링크를 모두 입력해주세요.');
+                    return;
+                }
+            } else {
+                validItems = qrItems.filter(item => item.url && item.url.trim() !== '');
+                
+                if (validItems.length === 0) {
+                    alert('최소 1개의 링크를 입력해주세요.');
+                    return;
+                }
             }
 
             generatedQRs = [];
@@ -421,6 +633,7 @@
                 if (qrDataURL) {
                     generatedQRs.push({
                         id: item.id,
+                        name: item.name,
                         url: item.url,
                         dataURL: qrDataURL
                     });
@@ -439,32 +652,158 @@
                 
                 const div = document.createElement('div');
                 div.className = 'qr-result';
-                div.innerHTML = `
-                    <div class="qr-badge">링크 ${originalIndex + 1}</div>
-                    <div class="qr-image-wrapper">
-                        <img src="${qr.dataURL}" alt="QR Code ${index + 1}">
-                    </div>
-                    <p class="qr-url">${qr.url}</p>
-                    <button onclick="downloadQR(${index})" class="btn btn-primary btn-download">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                        다운로드
-                    </button>
-                `;
+                
+                if (outputType === 'with-title') {
+                    div.innerHTML = `
+                        <div class="qr-badge">과목 ${originalIndex + 1}</div>
+                        <h3 class="qr-subject-name" style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; text-align: center;">${qr.name}</h3>
+                        <div class="qr-image-wrapper">
+                            <img src="${qr.dataURL}" alt="QR Code ${index + 1}">
+                        </div>
+                        <p class="qr-url">${qr.url}</p>
+                        <button onclick="downloadQR(${index})" class="btn btn-primary btn-download">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            다운로드
+                        </button>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <div class="qr-badge">링크 ${originalIndex + 1}</div>
+                        <div class="qr-image-wrapper">
+                            <img src="${qr.dataURL}" alt="QR Code ${index + 1}">
+                        </div>
+                        <p class="qr-url">${qr.url}</p>
+                        <button onclick="downloadQR(${index})" class="btn btn-primary btn-download">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            다운로드
+                        </button>
+                    `;
+                }
                 qrGrid.appendChild(div);
             });
 
             document.getElementById('results').classList.remove('hidden');
+            
+            // 인쇄 버튼은 'with-title' 모드일 때만 표시
+            const printBtn = document.querySelector('.results-header button[onclick="window.print()"]');
+            if (printBtn) {
+                printBtn.style.display = outputType === 'with-title' ? 'inline-flex' : 'none';
+            }
         }
 
         function downloadQR(index) {
             try {
                 const qr = generatedQRs[index];
-                const link = document.createElement('a');
-                link.download = `qrcode_${index + 1}.png`;
-                link.href = qr.dataURL;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                
+                if (outputType === 'with-title') {
+                    // 과목명 + QR코드를 하나의 이미지로 생성
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 캔버스 크기 설정 (A4 비율)
+                    canvas.width = 794;
+                    canvas.height = 1300;
+                    
+                    // 배경 흰색으로
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // 상단 카카오톡 배너 영역
+                    const bannerHeight = 120;
+                    ctx.fillStyle = '#FEE500';
+                    ctx.fillRect(0, 0, canvas.width, bannerHeight);
+                    
+                    // 카카오톡 로고 텍스트
+                    ctx.fillStyle = '#3C1E1E';
+                    ctx.font = 'bold 44px "Malgun Gothic", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('KakaoTalk', canvas.width / 2, bannerHeight / 2);
+                    
+                    // 과목명 그리기
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = 'bold 50px "Malgun Gothic", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    
+                    const maxWidth = 700;
+                    const lineHeight = 65;
+                    const words = qr.name.split(' ');
+                    let line = '';
+                    let y = bannerHeight + 80;
+                    
+                    words.forEach((word, i) => {
+                        const testLine = line + word + ' ';
+                        const metrics = ctx.measureText(testLine);
+                        
+                        if (metrics.width > maxWidth && i > 0) {
+                            ctx.fillText(line, canvas.width / 2, y);
+                            line = word + ' ';
+                            y += lineHeight;
+                        } else {
+                            line = testLine;
+                        }
+                    });
+                    ctx.fillText(line, canvas.width / 2, y);
+                    
+                    // "교육과정의" 텍스트
+                    y += lineHeight + 10;
+                    ctx.font = '36px "Malgun Gothic", sans-serif';
+                    ctx.fillStyle = '#475569';
+                    ctx.fillText('교육과정의', canvas.width / 2, y);
+                    
+                    // QR코드 이미지 로드 및 그리기
+                    const qrImage = new Image();
+                    qrImage.onload = function() {
+                        const qrSize = 420;
+                        const qrX = (canvas.width - qrSize) / 2;
+                        const qrY = y + 70;
+                        
+                        // QR코드 배경 (흰색 박스)
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+                        
+                        // QR코드 테두리
+                        ctx.strokeStyle = '#e2e8f0';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+                        
+                        ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+                        
+                        // "카카오 단체채팅방 바로가기" 텍스트
+                        const textY = qrY + qrSize + 70;
+                        ctx.font = 'bold 42px "Malgun Gothic", sans-serif';
+                        ctx.fillStyle = '#FEE500';
+                        ctx.fillText('카카오 단체채팅방', canvas.width / 2, textY);
+                        
+                        ctx.font = 'bold 42px "Malgun Gothic", sans-serif';
+                        ctx.fillStyle = '#3C1E1E';
+                        ctx.fillText('바로가기', canvas.width / 2, textY + 55);
+                        
+                        // 하단 안내 문구
+                        ctx.font = '26px "Malgun Gothic", sans-serif';
+                        ctx.fillStyle = '#64748b';
+                        ctx.fillText('QR코드를 스캔하여 참여하세요', canvas.width / 2, textY + 120);
+                        
+                        // 다운로드
+                        const link = document.createElement('a');
+                        link.download = `${qr.name}_카카오톡_qrcode.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    };
+                    qrImage.src = qr.dataURL;
+                    
+                } else {
+                    // QR코드만 다운로드
+                    const link = document.createElement('a');
+                    link.download = `qrcode_${index + 1}.png`;
+                    link.href = qr.dataURL;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
             } catch (error) {
                 console.error('Download error:', error);
                 alert('다운로드 중 오류가 발생했습니다.');
@@ -479,11 +818,103 @@
             
             const zip = new JSZip();
             
-            generatedQRs.forEach((qr, index) => {
-                const originalIndex = qrItems.findIndex(item => item.id === qr.id);
-                const base64Data = qr.dataURL.split(',')[1];
-                zip.file(`링크${originalIndex + 1}_qrcode.png`, base64Data, { base64: true });
-            });
+            if (outputType === 'with-title') {
+                // 과목명 + QR코드를 이미지로 생성하여 ZIP에 추가
+                for (const qr of generatedQRs) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = 794;
+                    canvas.height = 1300;
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // 카카오톡 배너
+                    const bannerHeight = 120;
+                    ctx.fillStyle = '#FEE500';
+                    ctx.fillRect(0, 0, canvas.width, bannerHeight);
+                    
+                    ctx.fillStyle = '#3C1E1E';
+                    ctx.font = 'bold 44px "Malgun Gothic", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('KakaoTalk', canvas.width / 2, bannerHeight / 2);
+                    
+                    // 과목명
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = 'bold 50px "Malgun Gothic", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    
+                    const maxWidth = 700;
+                    const lineHeight = 65;
+                    const words = qr.name.split(' ');
+                    let line = '';
+                    let y = bannerHeight + 80;
+                    
+                    words.forEach((word, i) => {
+                        const testLine = line + word + ' ';
+                        const metrics = ctx.measureText(testLine);
+                        
+                        if (metrics.width > maxWidth && i > 0) {
+                            ctx.fillText(line, canvas.width / 2, y);
+                            line = word + ' ';
+                            y += lineHeight;
+                        } else {
+                            line = testLine;
+                        }
+                    });
+                    ctx.fillText(line, canvas.width / 2, y);
+                    
+                    y += lineHeight + 10;
+                    ctx.font = '36px "Malgun Gothic", sans-serif';
+                    ctx.fillStyle = '#475569';
+                    ctx.fillText('교육과정의', canvas.width / 2, y);
+                    
+                    await new Promise((resolve) => {
+                        const qrImage = new Image();
+                        qrImage.onload = function() {
+                            const qrSize = 420;
+                            const qrX = (canvas.width - qrSize) / 2;
+                            const qrY = y + 70;
+                            
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+                            
+                            ctx.strokeStyle = '#e2e8f0';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+                            
+                            ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+                            
+                            const textY = qrY + qrSize + 70;
+                            ctx.font = 'bold 42px "Malgun Gothic", sans-serif';
+                            ctx.fillStyle = '#FEE500';
+                            ctx.fillText('카카오 단체채팅방', canvas.width / 2, textY);
+                            
+                            ctx.fillStyle = '#3C1E1E';
+                            ctx.fillText('바로가기', canvas.width / 2, textY + 55);
+                            
+                            ctx.font = '26px "Malgun Gothic", sans-serif';
+                            ctx.fillStyle = '#64748b';
+                            ctx.fillText('QR코드를 스캔하여 참여하세요', canvas.width / 2, textY + 120);
+                            
+                            const base64Data = canvas.toDataURL('image/png').split(',')[1];
+                            zip.file(`${qr.name}_카카오톡_qrcode.png`, base64Data, { base64: true });
+                            resolve();
+                        };
+                        qrImage.src = qr.dataURL;
+                    });
+                }
+            } else {
+                // QR코드만 ZIP에 추가
+                generatedQRs.forEach((qr, index) => {
+                    const originalIndex = qrItems.findIndex(item => item.id === qr.id);
+                    const base64Data = qr.dataURL.split(',')[1];
+                    zip.file(`링크${originalIndex + 1}_qrcode.png`, base64Data, { base64: true });
+                });
+            }
             
             const content = await zip.generateAsync({ type: 'blob' });
             const link = document.createElement('a');
